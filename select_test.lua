@@ -6,17 +6,17 @@ assert(server:listen())
 
 local peers = {}
 while l.sleep(10) do
-	local peer = server:accept()
+	local peer = server:accept() 		-- no wait
 	if peer then
 		table.insert(peers, peer)
 	end
-	local intrest = l.select(0, peers)
-	if #intrest > 0 then
+	local interests = l.select(0, peers)	-- arg #1, wait time as ms
+	if #interests > 0 then
 		print("==============")
-		for idx, peer in pairs(intrest) do
+		for idx, peer in pairs(interests) do
 			if peer:isconnect() then
 				print(idx, peer:getpeername())
-				peer:read()
+				peer:read()	-- if donot read, interests remain
 			end
 		end
 	end
