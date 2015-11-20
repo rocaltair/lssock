@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <lua.h>
 #include <lauxlib.h>
+#include <stdint.h>
+
+
 
 #if LUA_VERSION_NUM < 502
 #  define luaL_newlib(L,l) (lua_newtable(L), luaL_register(L,NULL,l))
@@ -11,7 +14,7 @@
 #define PEER "lssock{peer}"
 #define SERVER "lssock{server}"
 
-#define ENABLE_LSSOCK_DEBUG
+// #define ENABLE_LSSOCK_DEBUG
 #ifdef ENABLE_LSSOCK_DEBUG
 # define DLOG(fmt, ...) fprintf(stderr, "<lssock>" fmt "\n", ##__VA_ARGS__)
 #else
@@ -33,8 +36,10 @@
 } while(0)
 
 #ifdef WIN32
-# include <windows.h>
+// # include <windows.h>
 # include <winsock2.h>
+typedef unsigned long ssize_t;
+# define socklen_t int
 # define EINTR WSAEINTR
 # define EWOULDBLOCK WSAEWOULDBLOCK
 static void startup()
@@ -236,7 +241,7 @@ static int lua__close(lua_State *L)
 static int lua__getpeername(lua_State *L)
 {
 	struct sockaddr_in sa;
-       	socklen_t addrlen = sizeof(sa);
+	socklen_t addrlen = sizeof(sa);
 	const char *host = NULL;
 	peer_t *peer = CHECK_PEER(L, 1);
 	if (peer == NULL || peer->sock < 0 ) {
@@ -426,7 +431,7 @@ static int lua__select_peer(lua_State *L)
 	int j;
 	int r = 0;
 	int max = 0;
-	int array[1024] = {};
+	int array[1024] = {0};
 	int argc = lua_gettop(L);
 	double interval = luaL_optnumber(L, 1, 0.0);
 	struct timeval tv = { (long)(interval/1e3), ((int64_t)interval) % 1000 * 1000 };
@@ -460,8 +465,8 @@ static int lua__select_peer(lua_State *L)
 	j = 0;
 	for (i = 0; i <= max; i++) {
 		if(FD_ISSET(i, &rfds)) {
-			j++;
 			int idx = array[i];
+			j++;
 			lua_rawgeti(L, -2, idx);
 			lua_rawseti(L, -2, j);
 		}
